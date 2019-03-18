@@ -102,3 +102,5 @@ DWORD WINAPI ThreadFunc(PVOID pvParam){
 - 线程内核状态变为触发状态
 - 若线程是进程中最后一个线程，则进程也终止
 - 线程内核对象引用计数-1
+### 线程内幕
+<img src="resource/thread_core.jpg)"/>
