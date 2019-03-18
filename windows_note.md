@@ -103,4 +103,5 @@ DWORD WINAPI ThreadFunc(PVOID pvParam){
 - 若线程是进程中最后一个线程，则进程也终止
 - 线程内核对象引用计数-1
 ### 线程内幕
-<img src="resource/thread_core.jpg)"/>
+<img src="https://github.com/HowsonLiu/Notes/blob/master/resource/thread_core.jpg"/>
+![](https://github.com/HowsonLiu/Notes/blob/master/resource/thread_core.jpg)
