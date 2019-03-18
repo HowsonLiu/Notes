@@ -104,4 +104,3 @@ DWORD WINAPI ThreadFunc(PVOID pvParam){
 - 线程内核对象引用计数-1
 ### 线程内幕
 <img src="https://github.com/HowsonLiu/Notes/blob/master/resource/thread_core.jpg"/>
-![](https://github.com/HowsonLiu/Notes/blob/master/resource/thread_core.jpg)
