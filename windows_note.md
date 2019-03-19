@@ -14,7 +14,7 @@
 - 仅与进程相关，不同进程相同内核对象句柄值不一样
 - 句柄值实际上是进程句柄表的索引，除以4可以得到具体的索引值
 ### 进程的句柄表
-一个进程在初始化时，系统会为其分配一个空句柄表。句柄表仅供内核对象使用，不适用与用户对象或者GDI对象。大概格式如下
+一个进程在初始化时，系统会为其分配一个空句柄表。句柄表仅供内核对象使用，不适用与用户对象或者GDI对象。大概格式如下    
 |索引|指向内核对象内存块的指针|访问掩码|标志|
 |:--:|:--:|:--:|:--:|
 |1|0x????????|0x????????|0x????????|
@@ -89,9 +89,9 @@ DWORD WINAPI ThreadFunc(PVOID pvParam){
 必须返回一个值，他是线程的退出代码
 ### 创建线程
 - Windows函数`CreateThread`
-- Microsoft C++运行库`_beginthreadex`
+- Microsoft C++运行库`_beginthreadex`（C++应该使用这个）
 ### 终止线程
-- 线程函数返回
+- 线程函数返回   
 同样的，只有这种方法才能正确执行C++对象的析构函数，正确地释放线程栈内存
 - 线程调用`ExitThread`
 - 其他线程调用`TerminateTherad`
@@ -103,4 +103,33 @@ DWORD WINAPI ThreadFunc(PVOID pvParam){
 - 若线程是进程中最后一个线程，则进程也终止
 - 线程内核对象引用计数-1
 ### 线程内幕
-<img src="https://github.com/HowsonLiu/Notes/blob/master/resource/thread_core.jpg"/>
+<img src="https://raw.githubusercontent.com/HowsonLiu/Notes/master/resource/thread_core.jpg"/>
+
+1. 系统在`CreateThread`后会创建一个线程内核对象，并将属性设置成如图所示（挂起）
+2. 从进程空间中分配线程堆栈内存，并将线程函数参数、线程函数指针依次写入栈中
+3. 线程上下文即是线程的一组CPU寄存器（CONTEXT结构），其中设置堆栈指针寄存器（SP）为线程函数指针，指令指针寄存器（IP）为`RtlUserThreadStart`或`BaseThreadStart`（32位Kernel32.dll）
+4. 线程取消挂起，交给一个处理器执行，系统在实际的寄存器中加载线程的上下文之后就可以执行代码了
+5. 由于IP为`RtlUserThreadStart`，所以线程是从`RtlUserThreadStart`开始
+    - 设置结构化异常处理帧(SEH帧)，用于处理线程执行期间产生的异常
+    - 调用线程函数，将pvParam传给他
+    - 线程函数返回时，调用`ExitThread`传递返回值，线程引用-1，然后线程停止执行
+#### CONTEXT的作用
+记住线程的状态，使得线程在下一次获得CPU时，能从上次停下来的地方继续
+### 线程挂起
+一个线程可以被多次挂起，最多可以挂起127次
+- 创建线程时传入CREATE_SUSPENDED标志挂起    
+- 通过`SuspendThread`将挂起计数+1
+这种方法需要知道目标线程在干什么，如果目标线程在分配堆内存，很容易会造成锁定堆
+### 线程恢复
+通过`ResumeThread`将挂起计数-1
+### 线程睡眠
+```c++
+VOID Sleep(DWORD dwMilliseconds);
+```
+表示线程将自己挂起dwMilliseconds长的时间。同时，他也放弃了在调用`Sleep`后自己时间片剩下的时间。值得注意的是，线程并不一定在dwMilliseconds时间后醒来，这取决于系统其他线程的情况。当值为0时，表示他放弃自己时间片中剩下的部分，当然系统在下一时间片时有可能调用到它（因为它没挂起）。
+### 线程优先级
+线程优先级分为0~31个级别，系统总是会令高优先级的线程抢占低优先级的线程。
+然而Windows不想将
+
+#### 小知识
+页面清零线程是唯一一个优先级为0的线程，负责在没有进程调度的时候将内存中的闲置页面清零。
