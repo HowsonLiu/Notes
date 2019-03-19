@@ -58,6 +58,56 @@ class B{
 // sizeof(B) = 1 + (3) + 4 + 40 + 1 + (7) = 56
 // #pragma pack(2) sizeof(B) = 1 + (1) + 4 + 28 + 1 + (1) = 36
 ```
+## C语言位域
+将一个字节划分成不同的区域，并说明区域位数，从而储存不需要占一个字节的信息
+```c++
+struct bitsfield{
+	char c : 2;	
+	int i : 2;	
+	int j : 2;	
+	int  : 0;	
+	int m : 2;	
+}
+```
+### 要求
+- 位域成员类型必须为整数类型，如int, char, long, short等
+```c++
+char c : 2; // ok
+float f : 2; // error
+A a : 2; // error
+```
+- 位域长度不能大于类型本身长度
+```c++
+int i : 33; // error int 32 bits
+```
+- 无名位域用于填充，不可访问
+- 赋值不能超出位域大小，否则按位截取取值
+```c++
+bitsfield b;
+b.i = 2;
+cout << b.i << endl;	// 打印出-2，因为0x00000010截取为0x10，二进制补码为-2
+```
+### 大小
+- 相邻位域类型相同，捆绑存储
+```c++
+struct bitsfield{
+	char c : 2;	// 一个字节
+	int i : 2;	
+	int j : 2;	// i与j捆绑储存，一共占一个字节中的4个bits
+	int  : 0;	// 空域分割，剩下的4个bits不能放m
+	int m : 2;	// m放到下一个字节的前2个bits
+}
+// sizeof(bitsfield) = sizeof(char) + sizeof(int)
+```
+- 一个字节剩余空间不够存放下一个位域时，从下一字节开始
+```c++
+struct bitsfieldex{
+	int c : 5;
+	int d : 2;	// c d 捆绑为1个字节
+	int e : 2;	// e储存在下一字节
+}
+// sizeof(bitsfieldex) = sizeof(int)
+```
 ## C++关键字
 ### const
 表明被修饰的变量或者对象值不能改变，改变会在编译时报错
