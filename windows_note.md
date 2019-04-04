@@ -190,3 +190,71 @@ HANDLE CreateEvent(PSECURITY_ATTRIBUTES psa,    // 安全属性
 参数`bManualReset`区分这个事件是手动重置事件还是自动重置事件。手动重置事件在触发时会让所有线程都变成可调度状态，而自动重置事件在触发时会让一个线程变成可调度状态。
 - `BOOL SetEvent(HANDLE hEvent);`触发事件
 - `BOOL ResetEvent(HANDLE hEvent);`事件变为未触发状态
+##### 可等待的计时器内核对象
+他们会在某个指定的时间触发，或每隔一段时间触发一次。同样他也可以设置为手动重置或者自动重置。
+- 创建
+```c++
+// 打开是OpenWaitableTimer
+HANDLE CreateWaitableTimer(PSECURITY_ATTRIBUTES psa,    
+                        BOOL bManualReset,
+                        PSTSTR pszName)
+```
+- 触发
+```c++
+BOOL SetWaitableTimer(HANDLE hTimer,    
+                    const LARGE_INTEGER* pDueTime,  // 开始时间，其实是个FILETIME结构,注意内存对齐
+                    LONG lPeriod,   // 周期（毫秒）
+                    PTIMERAPCROUTINE punCompletionRoutine,  // APC调用（异步过程调用）
+                    PVOID pvArgToCompletionRoutine,     // 回调的参数
+                    BOOL bResume)   // 状态为挂起时是否唤醒
+```
+- 取消 `BOOL CancelWaitableTimer(HANDLE hTimer)`
+##### 信号量内核对象
+内部维护两个32位值：最大资源计数和当前资源计数。其中：
+- 当前资源计数 > 0，则信号量处于触发状态
+- 当前资源计数 == 0，则信号量处于未触发状态
+- 0 <= 当前资源计数 <= 最大资源计数
+- 创建
+```c++
+HANDLE CreateSemaphoreEx(PSECURITY_ATTRIBUTE psa,
+                        LONG lInitialCount, // 当前资源计数
+                        LONG lMaximumCount, // 最大资源计数
+                        PCTSTR pszName);
+```
+- 递增信号量当前资源计数
+```c++
+BOOL ReleaseSemaphore(HANDLE hSemaphore,
+                    LONG lReleaseCount, // 递增量
+                    PLONG plPreviousCount)  // 返回当前资源计数的原始值
+```
+##### 互斥量内核对象
+互斥量与关键段行为完全相同，但互斥量是内核对象，而关键段只是用户模式下的同步对象，因此互斥量比关键段慢。除此之外，他们之间的区别还有：互斥量支持跨进程使用，互斥量支持等待任意长度时间`WaitForSingleObject`以及等待其他内核对象`WaitForMultipleObjects`
+- 创建
+```c++
+HANDLE CreateMutex(PSECURITY_ATTRIBUTES psa,
+                BOOL bInitialOwner, // 是否被创建线程占用
+                PCTSTR pszName);
+```
+- 释放
+```c++
+BOOL ReleaseMutex(HANDLE hMutex);
+```
+- 原理
+互斥量内部维护一个线程ID。如果线程ID为0，表示互斥量不为任何线程所用，处于触发状态。若线程ID不为0，则调用的线程会调用一个等待函数并传入互斥量句柄，直至互斥量被`ReleaseMutex`释放触发。
+### 总结
+#### 线程通信的方法：
+- 全局变量，但要考虑线程同步的问题
+- 自定义消息
+- 标准库：`std::future`储存一个将来会被赋值的值；`std::packaged_tast`储存一个可调用对象以便异步调用
+#### 线程同步的方法：
+- 用户模式
+    - Interlocked系列函数
+    - 关键段
+    - 条件变量
+    - 读写锁和自旋锁
+- 内核模式
+    - 等待函数
+    - 事件内核对象
+    - 可等待的计时器内核对象
+    - 信号量内核对象
+    - 互斥量内核对象
