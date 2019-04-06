@@ -258,3 +258,64 @@ BOOL ReleaseMutex(HANDLE hMutex);
     - 可等待的计时器内核对象
     - 信号量内核对象
     - 互斥量内核对象
+## I/O
+### 常见设备：
+- 文件
+- 目录
+- 邮件槽
+- 命名管道
+- 匿名管道
+- 套接字
+### 常见操作：
+#### 同步：
+- 同步打开设备（各种设备）
+```c++
+HANDLE CreateFile(PCTSTR pszName,               // 表示设备的类型或设备的实例
+                DWORD dwDesiredAccess,          // 打开方式，比如读，写
+                DWORD dwShareMode,              // 设备共享特权，比如其他内核对象读写
+                PSECURITY_ATTRIBUTES psa,       // 安全标志
+                DWORD dwCreationDisposition,    // 常用于文件，比如只能打开已存在的文件
+                DWORD dwFlagsAndAttributes,     // 设置属性等
+                HANDLE hFileTemplate);
+```
+匿名管道用`CreatePipe`，命名管道用`CreateNamedPipe`
+- 同步读写设备
+```c++
+// WriteFile参数相同
+BOOL ReadFile(HANDLE hFile,             // 设备句柄
+            PVOID pvBuffer,             // 缓冲区地址
+            DWORD nNumBytesToRead,      // 大小
+            PDWORD pdwNumBytes,         // 成功读取的大小
+            OVERLAPPED* pOverlapped);   // 同步下为NULL
+```
+- 数据刷新至设备
+```c++
+BOOL FlushFileBuffers(HANDLE hFile);
+```
+- 取消I/O操作
+```c++
+BOOL CancelSynchronousIO(HANDLE hThread);   // 由于I/O阻塞的线程句柄
+```
+#### 异步
+- 异步打开设备   
+使用同步打开的函数，但在参数`dwFlagsAndAttributes`中传入`FILE_FLAG_OVERLAPPED`标志
+- 异步读写设备   
+需要填写pOverlapped，在异步请求完成之前不能销毁`OVERLAPPED`
+```c++
+typedef struct _OVERLAPPED{
+    DWORD Internal;                 // 错误码
+    DWORD InternalHigh;             // 成功读取的大小
+    DWORD Offset;                   // 两者构成64位的偏移量，用于文件指针
+    DWORD OffsetHigh;
+    HANDLE hEvent;                  // I/O通知事件句柄
+} OVERLAPPED, *LPOVERLAPPED;
+```
+- 异步取消
+```c++
+BOOL CancelIo(HANDLE hFile);
+```
+- 接受I/O完成通知
+    - 触发设备内核对象（文件句柄）
+    - 触发事件内核对象（`OVERLAPPED`的`hEvent`变量）
+    - 可提醒I/O（`ReadFileEx`中传入回调函数）
+    - I/O完成端口（`CreateIoCompletionPort`）
