@@ -92,10 +92,12 @@ DWORD WINAPI ThreadFunc(PVOID pvParam){
 ### 创建线程
 - Windows函数`CreateThread`
 - Microsoft C++运行库`_beginthreadex`（C++应该使用这个）
+#### `CreateThread`和`_beginthreadex`的区别：
+`CreateThread`是Windows创建线程的接口，而`_beginthreadex`是C++运行库的函数。由于当年C++运行库没有考虑到多线程环境，因此使用`CreateThread`创建的线程有可能会修改其他线程的变量（比如`errno`）。所以C++运行库提供一个创建线程的函数`_beginthreadex`，他在运行库堆上为每个线程创建结构体`_tiddata`，里面保存与线程相关的数据。接着`_beginthreadex`会调用`CreateThread`，函数地址传的是`_threadstartex`，参数地址传的是`_tiddata`。最后在调用`_threadstartex`时会将`_tiddata`与线程关联一起。
 ### 终止线程
 - 线程函数返回   
 同样的，只有这种方法才能正确执行C++对象的析构函数，正确地释放线程栈内存
-- 线程调用`ExitThread`
+- 线程调用`ExitThread`（不会销毁`_tiddata`，`_endthreadex`才会）
 - 其他线程调用`TerminateTherad`
 - 包含此线程的进程终止
 ### 线程终止时操作系统执行的操作
