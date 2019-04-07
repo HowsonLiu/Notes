@@ -319,3 +319,21 @@ BOOL CancelIo(HANDLE hFile);
     - 触发事件内核对象（`OVERLAPPED`的`hEvent`变量）
     - 可提醒I/O（`ReadFileEx`中传入回调函数）
     - I/O完成端口（`CreateIoCompletionPort`）
+## Windows线程池
+- 以异步方式调用函数
+- 每隔一段时间调用函数
+- 内核对象触发的时候调用函数
+- 异步I/O完成的时候调用函数
+### 异步调用函数
+调用的函数格式
+```c++
+VOID NTAPI SimpleCallback(PTP_CALLBACK_INSTANCE pInstance,
+                        PVOID pvContext);                   // 这是传入的参数
+```
+将函数放入线程池
+```c++
+BOOL TrySubmitThreadpoolCallback(
+    PTP_SIMPLE_CALLBACK pfnCallback,        // 调用的函数指针
+    PVOID pvContext,                        // 传进的参数
+    PTP_CALLBACK_ENVIRON pcbe);
+```
