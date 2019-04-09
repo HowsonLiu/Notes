@@ -144,7 +144,7 @@ MSG msg;
 // Main message loop:
 while (GetMessage(&msg, nullptr, 0, 0))
 {
-    if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))     // 前面他加载了一个加速器
+    if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))     // 将快捷键变成对应菜单命令
     {
         TranslateMessage(&msg); // 翻译。比如取WM_KEYDOWN和WM_KEYUP转化成WM_CHAR
         DispatchMessage(&msg);  // 使用窗口过程函数分发消息
@@ -228,3 +228,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 ## SendMessage和PostMessage的区别
 - `SendMessage`要等消息处理完才返回，`PostMessage`立即返回
 - 实际上`SendMessage`是直接调用目标窗口的窗口过程函数`WndProc`,而`PostMessage`将消息放入消息队列后返回
+# Windows消息机制
+## 消息的定义
+```c++
+typedef struct tagMSG
+{
+    HWND hwnd;      // 窗口句柄
+    UINT message;   // 消息号
+    WPARAM wParam;  // 参数1
+    LPARAM lParam;  // 参数2
+    DWORD time;     // 消息创建时的消息
+    POINT pt;       // 消息创建时光标位置
+} 	MSG;
+```
+## 消息的类型
+- 系统定义的消息
+    - 窗口消息，比如绘制窗口
+    - 命令消息，`WM_COMMAND`
+    - 通知消息，`WM_NOTIFY`
+- 应用定义的消息
+    - 用户自定义的消息，`WM_USER`
+    - 程序之间通信的消息，`WM_APP`
+## 消息队列
+- 系统消息队列   
+操作系统唯一的消息队列，接受驱动传来的消息，并把消息放进目标窗口所在的线程消息队列中等待处理
+- 线程消息队列   
+一个线程被创建出来默认不是GUI线程，当他调用GDI函数时，Windows才将它转换成GUI线程。每个GUI线程关联一个THREADINFO结构，这个结构里面有4个消息队列：
+    - 发送消息队列：保存其他线程通过`SendMessage`发送给他的消息
+    - 登记消息队列：保存其他队列通过`PostMessage`发送给他的消息
+    - 输入消息队列：保存系统队列分发过来的消息
+    - 响应消息队列：保存发送消息后的结果。比如`SendMessage`成功后会收到一个Reply消息（里面是返回值）以唤醒自己
+
+`WM_PAINT`和`WM_TIMER`只有在消息队列没有其他消息时才会被处理，`WM_PAINT`还会合并以提高效率，其余消息按照先进先出被处理。消息队列有容量，超过不会处理
+## 发送消息   
+
+|  |SendMessage|PostMessage|
+|:--:|:--:|:--:|
+|相同线程|直接调用窗口处理函数|把消息放进队列|
+|不同线程|发送后收到Reply前阻塞|最好使用`PostThreadMessage`代替|
+
+在`SendMessage`会给目标线程添加QS_SENDMESSAGE标记，接着自己进入idle状态，此时若收到别人的`SendMessage`，则目标线程立即处理
+
+## 接收消息的算法
+1. QS_SENDMESSAGE标记，发送消息队列为空时才清除
+2. 登记消息队列，优先级越高越快响应
+3. QS_QUIT
+4. 输入消息队列
+5. QS_PAINT，返回WM_PAINT
+6. QS_TIMER，返回WM_TIMER
+
+## SendMessage死锁解决
+- `PostMessage`
+- `SendMessageTimeout`
+- `SendNotifyMessage`
