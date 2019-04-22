@@ -204,3 +204,6 @@ void getNext(const char* target, int size, int* next){
 ```c++
 if(source[i] != target[j]) j = next[j]; // 不需要回溯i指针了
 ```
+## 坑
+- VS中同一解决方案中不同项目互相调用，项目类型不能为{exe, exe}（即使设置一个为启动工程也不行）。
+- 在{exe, lib}的解决方案中，如果lib项目调用了其他lib，则其他lib的路径名字设置只能在exe项目中设置。
