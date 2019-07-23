@@ -214,3 +214,20 @@ if(source[i] != target[j]) j = next[j]; // 不需要回溯i指针了
 ### 链接失败的原因
 - 仔细检查lib路径以及lib库名字
 - 有可能是缺少`extern "C"`关键字造成的，比如ffmpeg
+
+## 变量声明与命名空间
+- A命名空间里面的类a需要使用B命名空间里面的类b，在a类的头文件中：
+```c++
+namespace B{
+	class b;	// right
+}
+
+class B::b;	// error
+namespace A{
+	class B::b;	// error
+	class a{
+	private:
+		b instance;
+	}
+}
+```
