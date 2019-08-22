@@ -238,3 +238,7 @@ namespace A{
 - 打开dmp的方法：
 	- 双击打开，若dmp中崩溃处代码路径找不到，则提示你打开对应文件。这种方法只能看到崩溃栈中的代码。
 	- 拖进已经打开的工程内，工程可以与编译成exe的工程稍微不一致。这种方法由于加载了整个工程，因此可以常规地任意跳转
+
+## [动态链接与静态链接](https://blog.csdn.net/alisa_xf/article/details/79496113)
+- 对于第三方库来说，动态链接一般指的是`LoadLibary`这种，静态链接指的是`#pragma comment`这种
+- 对于C++运行时库来说，VS设置中一般有两种选项：Multi-threaded(MT)与Muti-threaded DLL(MD)。MT指的是将C++运行时库以静态链接的方式链接在一起,它链接的库是LIBCMT.lib，最终生成的文件中只有一个exe。而MD指的是将C++运行时库以动态链接的方式连接在一起，它需要的库是MSVCRT.dll，因此若运行的机器缺少此dll就会出错
