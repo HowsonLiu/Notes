@@ -72,3 +72,53 @@ html = session.get(url, proxies=proxies
 - 不需要使用解析包
 - 可以执行js
 - 异步
+
+## 网页编码与pycharm编码不一致
+例如网页编码使用gbk，而pycharm的默认编码是utf-8，这样在ide上面会显示乱码
+```python
+html = requests.get('www.baidu.com')
+html.encoding='utf-8'
+```
+
+## 字符串格式化方法
+- C语言风格
+```python
+res = 'a = %s, %d' % ('a', 1)
+```
+- format
+```python
+res = 'a = {}'.format('a')
+```
+
+- f 3.7新特性
+```python
+insert_str = 'a'
+res = f'a = {insert_str}'
+```
+
+## 正则表达式
+- `re.match`从头开始搜索，`re.search`全局搜索
+- 返回的对象是一个类，`group`函数返回全部，`groups`函数返回括号内
+```python
+target = 'I am a boy'
+res = re.search('a (.*?)', target, re.I)    # boy
+```
+- `compile`函数将正则解耦出来
+- `sub`函数可以正则替换
+
+## XPath
+```python
+from lxml import etree
+target = '''
+<li class="li li-first">
+    <a href="link.html">
+        first item
+    </a>
+</li>
+'''
+html = etree.HTML(target)
+```
+可以在F12中的html文档中Ctrl+F搜索栏下使用XPath语法
+
+## with语法糖
+实际上调用了面向对象中的`__enter__`以及`__close__`方法
