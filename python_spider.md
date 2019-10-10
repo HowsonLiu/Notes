@@ -122,3 +122,79 @@ html = etree.HTML(target)
 
 ## with语法糖
 实际上调用了面向对象中的`__enter__`以及`__close__`方法
+
+## csv文件
+逗号分隔值(Comma-Separated Values, CSV)，文件以纯文本形式存储表格数据
+```
+Name, Age, Sex
+Mike, 15, Boy
+Lily, 15, Gril
+```
+python使用
+```python
+import csv
+
+with open('./test.csv', encoding='urf-8') as f: # 配合'a+'封装成方法
+    f_csv = csv.writer(f)
+    f_csv.writerow(('Name', 'Age', 'Sex'))
+    f_csv.writerow([('Mike', 15, 'Boy'), ('Lily', '15', 'Gril')])
+
+with open('./test.csv', encoding='utf-8') as f:
+    f_csv=csv.reader(f) # 列表 DictReader字典
+    next(f_csv)
+    for c in f_csv:
+        print(c)
+
+# result 
+# ['Mike', '15', 'Boy']
+# ['Lily', '15', 'Gril']
+```
+
+## Excel
+```python
+import xlwt # 写入
+import xlrd # 读取
+
+def create():
+    excel_book = xlwt.Workbook()
+    sheet = excel_book.add_sheet("sheet1")
+    sheet.write(1, 0, "hello")
+    excel_book.save('test.xls')
+
+def read():
+    excel_book = xlrd.open_workbook('text.xls')
+    sheet = excel_book.sheets()[0]
+    row_size = excel_book.sheets()[0].nrows
+    col_size = excel_book.sheets()[0].ncols
+    for i in range(row_size):
+        print(sheet.row_values(i))
+    for j in range(col_size):
+        print(sheet.col_values(j))
+    v_1_1 = sheet.cell_value(1,1)
+```
+
+## word
+pip install python-docx
+```python
+form docx import Document
+# useless
+```
+
+## SQL建表
+```python
+from sqlalchemy import create_engine, Table, MetaData, Column, String, Integer, select
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()   # 建表需要继承的基类
+class TableA(Base):
+    __tablename__ = 'TableA'
+    Name = Column(Integer(), primary_key = True)    # int主键
+    Value = Column(String(10), nullable = False)      # 10字符非空
+    TableB_Id = Column(Integer(), ForeignKey("TableB.Id"))  # 外键关联TableB的Id项
+
+class TableB(Base):
+    __tablename__ = 'TableB'
+    Id = Column(Integer(), primary_key = True, autoincrement = True)    # 自增主键
+```
