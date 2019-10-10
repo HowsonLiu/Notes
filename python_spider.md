@@ -181,6 +181,8 @@ form docx import Document
 ```
 
 ## SQL建表
+ORM
+> Object-Relational Mapping 将数据库映射成对象
 ```python
 from sqlalchemy import create_engine, Table, MetaData, Column, String, Integer, select
 from sqlalchemy import ForeignKey
@@ -189,12 +191,62 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()   # 建表需要继承的基类
 class TableA(Base):
-    __tablename__ = 'TableA'
+    __tablename__ = 'TableA'    # 数据库中表的名字
     Name = Column(Integer(), primary_key = True)    # int主键
     Value = Column(String(10), nullable = False)      # 10字符非空
-    TableB_Id = Column(Integer(), ForeignKey("TableB.Id"))  # 外键关联TableB的Id项
+    TableB_Id = Column(Integer(), ForeignKey('TableB.Id'))  # 外键关联TableB的Id项
 
 class TableB(Base):
     __tablename__ = 'TableB'
     Id = Column(Integer(), primary_key = True, autoincrement = True)    # 自增主键
+```
+
+## Sqlalchemy relationship
+```python
+class Father(Base):
+    __tablename__ = 'Father'
+    name = Column(String(125), primary_key = True)
+    son = relationship('Son', backref = 'father'        # 1
+        cascade = 'all, delete' )       # 删除时自动清除关联数据
+
+class Son(Base):
+    __tablename__ = 'Son'
+    name = Column(String(125), primary_key = True)
+    father_name = Column(String(100), ForeignKey('Father.name'))    # 2
+```
+在这里，Father跟Son是一对多的关系。在Son表中，包含了外键`father_name`，来源是Father表的`name`字段（2）。在Father表中，有一个`relationship`（1），表示Father表可以通过`.son`来关联他的Son表，同时`backref`字段表示Son表可以通过`.father`来关联他的Father表，用于简化操作。
+
+## Sqlalchemy Add
+```python
+engine = create_engine(
+    'mysql+pymysql://root:password@127.0.0.1:3306/database_name'
+    max_overflow = 5,   # 最大连接数
+    pool_size = 10      # 线程数量
+    echo = True         # 回显
+)
+session = sessionmaker(bind = engine)
+sess = session()
+f1 = Father(name = 'FatherOne')
+sess.add(f1)
+sess.commit()   # 提交事务才能生效
+
+s1 = Son(name = 'SonOne')
+s2 = Son(name = 'SonTwo')
+s1.father = f1
+s2.father = f2      # 使用了上面的relationship的backref
+sess.add_all([s1, s2])
+sess.commit()
+
+f2 = Father(name = 'FatherTwo')
+f2.son = [Son(name = 'SonThree'), Son(name = 'SonFour')]    # relationship
+sess.add(f2)
+sess.commit()
+```
+
+## Sqlalchemy Search and Delete and update
+```python
+res = sess.query(Son).filter_by(name = 'SonOne')  # select * from Son where name = 'SonOne'
+sess.delete(res)
+s2.nane = 'Son2'    # 这样就更新了
+sess.commit()
 ```
