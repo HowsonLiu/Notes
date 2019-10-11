@@ -247,6 +247,54 @@ sess.commit()
 ```python
 res = sess.query(Son).filter_by(name = 'SonOne')  # select * from Son where name = 'SonOne'
 sess.delete(res)
-s2.nane = 'Son2'    # 这样就更新了
+from sqlalchemy import or_, and_
+sess.query(Son).filter(or_(Son.name == 'SonOne', Son.name == 'SonTwo')).all()   # select * from Son where name = 'SonOne' or name = 'SonTwo'
+# Son.name.like('Son%')     模糊查询
+s2.name = 'Son2'    # 这样就更新了
 sess.commit()
 ```
+
+## 多线程连接数据库
+```python
+from sqlalchemy.orm import scoped_session
+Session = sessionmaker(engines)
+session = scoped_session(Session)   # 保证线程安全
+
+class MyThread(threading.Thread):
+    def __init__(self, threadName):
+        super(MyThread, self).__init__()
+        self.name = threadName
+
+    def run(self):
+        # 每个线程一个session
+        sess = session()
+
+if __name__ == '__main__':
+    thread_pool = []
+    for i in range(10):
+        thread_pool.append(MyThread('%s' % i))
+    for i in thread_pool:
+        i.start()
+    for i in thread_pool:
+        i.join()
+```
+同一线程同一session，不同线程不同session
+
+## Python中的TLS
+```python
+import threading
+a = threading.local()
+a.value = 1
+
+def change(val):
+    try:
+        print(threading.current_thread().name, a.value)
+    except:
+        print(threading.current_thread().name, 'no a.value')    # 三个线程都打印这个
+
+for i in range(3):
+    threading.Thread(target = change, args = (i)).start()
+
+print(threading.current_thread().name, a.value)     # 打印出1
+```
+a变量虽然是全局的，但是不同线程会有一份属于自己的拷贝
