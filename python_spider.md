@@ -298,3 +298,16 @@ for i in range(3):
 print(threading.current_thread().name, a.value)     # 打印出1
 ```
 a变量虽然是全局的，但是不同线程会有一份属于自己的拷贝
+
+## google fire包
+允许在命令行中传入参数
+```python
+import fire
+
+def func(val):
+    print(val)
+
+if __name__ == '__main__':
+    fire.Fire(func)
+```
+> python 1.py --val=123   # 123
