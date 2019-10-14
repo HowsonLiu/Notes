@@ -311,3 +311,82 @@ if __name__ == '__main__':
     fire.Fire(func)
 ```
 > python 1.py --val=123   # 123
+
+## python GIL
+> GIL: 全局解释器锁(global interpreter lock)。即使在多核心处理的机器上，GIL解析器保证任何时刻仅有一个线程在执行
+- 多线程在计算密集型时，不好用，因为GIL，建议用C
+- 在IO密集型时，好用，因为网络，磁盘IO阻塞情况比较多，用C替换提升不大，反而用Python代码量少
+### thread的解决方案
+使用多进程`multiprocessing`代替多线程`thread`，缺点是：
+- 开销大
+- 进程通信难
+
+## python thread and lock
+```python
+import threading
+
+lock = threading.Lock()
+rlock = thread.RLock()  # 递归锁
+# with rlock:
+#   do sth
+
+def func(arg):
+    lock.acquire()
+    print(arg)
+    lock.release()
+
+t = threading.Thread(target = func, args = ('hello',))   # 仅声明
+t.setDaemon(True)   # 守护线程，随着主线程消失 
+t.start()   # 执行
+t.join()    # 主线程阻塞等待t执行完
+```
+
+## python multiprocessing
+```python
+import multiprocessing
+
+p = multiprocessing.Process(target = func, args = ('hello',))
+p.start()
+p.join()
+```
+### 进程通信
+共享内存
+```python
+from multiprocessing import Process, Queue
+def write(q):
+    for i in range(10):
+        q.put(i)
+
+def read(q):
+    while True:
+        i = q.get()
+
+q = Queue()
+pw = Process(target = write, args = (q,))
+pr = Process(target = read, args = (q,))
+pw.start()
+pr.start()
+pw.join()
+```
+
+## python pool
+```python
+def square(val):
+    return val * val
+
+inputs = list(range(100))   # [0,1,2,3,...]
+pool = multiprocessing.Pool(processes = 4)
+outputs =pool.map(square, inputs)   # [0,1,4,9,...]
+output = pool.apply(square, args = (1,))    # 单任务
+pool.close()
+pool.join()
+```
+>pip install threadpool
+```python
+import threadpool
+pool = threadpool.ThreadPool(10)    # 线程数
+requests = threadpool.makeRequests(square, inputs)   # 提交任务
+for req in requests:
+    pool.putRequest(req)    # 执行任务
+pool.wait()     # join?
+```
