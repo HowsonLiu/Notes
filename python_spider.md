@@ -390,3 +390,46 @@ for req in requests:
     pool.putRequest(req)    # 执行任务
 pool.wait()     # join?
 ```
+
+## python concurrent
+3.2版本内置支持
+```python
+import concurrent.futures
+
+with concurrent.futures.ThreadPoolExecutor(max_workers = 5) as executor:
+    futures = [executor.submit(func, val) for val in vals]
+    for future in concurrent.futures.as_completed(futures):
+        print(future.result())
+```
+
+## 协程
+协程修饰函数，用来对有大量IO操作的程序进行加速
+- 异步函数前加上`async`关键字
+- 调用异步函数不能直接调用，需要加上`await`
+- 与异步函数交互的函数也是异步函数
+```python
+import asyncio
+
+async def get_html(url):
+    asyncio.sleep(3)    # 注意不是time.sleep
+
+tasks = []
+for url in urls:
+    tasks.append(get_html(url))
+loop = asyncio.get_event_loop()
+loop.run_until_complete(asymcio.wait(tasks))
+# 单任务
+task = asyncio.create_task(get_html())
+await task
+```
+requests库不支持异步爬虫，使用aiohttp
+
+## aiohttp
+```python
+import asyncio
+import aiohttp
+
+async def get_html(url):
+    async with aio.http.ClientSession(headers = headers) as session:
+        async with session.get(url) as 
+```
