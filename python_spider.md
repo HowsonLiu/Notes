@@ -431,5 +431,13 @@ import aiohttp
 
 async def get_html(url):
     async with aio.http.ClientSession(headers = headers) as session:
-        async with session.get(url) as 
+        async with session.get(url) as resp:
+            text = await resp.text()
+
+loop = asyncio.get_event_loop()
+tasks = [get_html(url) for url in urls]
+loop.run_until_complete(asyncio.wait(tasks))
+loop.close()
 ```
+
+## 分布式爬虫
