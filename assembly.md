@@ -196,3 +196,44 @@ len	equ	$ - msg			;length of our dear string
 > neg eax
 
 求补运算，在数学上相当于取负
+### setne
+> setne al
+
+set not equal，ZF==1时al=0，否则al=1
+### sbb
+> sbb eax, ebx
+
+带借位减法指令。上面等价于`eax = eax - ebx - CF`
+eax = 1020H, ebx = 1200H, CF = 1, => sbb eax, ebx = FE1F
+### shl
+> shl eax, 3
+
+位运算左移。Shift Logical Left。
+### sar
+> sar eax, 3
+
+位运算右移。
+### rep
+> rep opr
+
+重复执行后面的指令。ecx每执行一次-1。
+### stos
+> mov ecx, 30
+mov eax, 0cccccccch
+rep stos dword ptr es:[edi]
+
+串存储指令。将al/ax/eax的值存储到es:edi指定的内存单元
+### scasb/scasw/scasd
+> push esi
+mov esi, [esp+4+arg_0]
+push edi
+mov edi, esi
+or ecx, 0ffffffffh
+xor eax, eax
+repne scasb
+
+在字符串或者数组中寻找一个值。分别将al/ax/eax中的值与edi寻址的一个byte/word/dword进行比较。常常结合repne使用。示例含义是内联strlen
+
+## 汇编下的加减乘除
+### 加法
+- 两个数
