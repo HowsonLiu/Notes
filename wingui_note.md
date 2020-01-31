@@ -281,3 +281,59 @@ typedef struct tagMSG
 - `PostMessage`
 - `SendMessageTimeout`
 - `SendNotifyMessage`
+
+# 字符串
+## Windows下的print
+由于Windows不含标准输入以及标准输出的概念，因此windows使用sprintf将格式化字符串输入到一个缓存区中
+``` c++
+int sprintf(char* szBuffer, const char *szFormat, ...);
+// Windows 下的print等同于
+char szBuffer[100];
+sprintf(szBuffer, "The sum of %i and %i is %i", 5, 4, 5+4);
+puts{szBuffer};
+```
+使用`va_list`等宏实现的sprintf
+```c++
+int sprintf(char *szBuffer, const char *szFormat, ...){
+    int iReturn;
+    va_list pArgs;
+
+    va_start(pArgs, szFormat);
+    iReturn = vsprintf(szBuffer, szFormat, pArgs);
+    va_end(pArgs);
+
+    return iReturn;
+}
+```
+`va_list`等宏实际上是C语言标准库对可变函数参数的处理，定义如下
+```c++
+typedef char * va_list; // TC中定义为void*
+#define _INTSIZEOF(n) ((sizeof(n)+sizeof(int)-1)&~(sizeof(int) - 1) ) //为了满足需要内存对齐的系统
+#define va_start(ap,v) ( ap = (va_list)&v + _INTSIZEOF(v) ) //ap指向第一个变参的位置，即将第一个变参的地址赋予ap
+#define va_arg(ap,t) ( *(t *)((ap += _INTSIZEOF(t)) - _INTSIZEOF(t)) ) //获取变参的具体内容，t为变参的类型，如有多个参数，则通过移动ap的指针来获得变参的地址，从而获得内容
+#define va_end(ap) ( ap = (va_list)0 ) //清空va_list，即结束变参的获取
+```
+
+# 绘制
+## WM_PAINT
+### 收到
+当窗口的客户去部分或者全部无效并且必须更新的时候，将会收到`WM_PAINT`通知
+无效的情况：
+- 窗口首次创建
+- 调整窗口尺寸
+- 最小化再恢复
+- 窗口被其他窗口覆盖后不再遮挡
+- 调用`ScrollWindow`或者`ScrollDC`滚动客户区
+- 调用`InvaildateRect`或者`InvaildateRgn`显示生成
+
+相比于windows记录不可视的区域，不如直接发送`WM_PAINT`消息让其重绘更简单。当然在某些情况下，windows**可能**会保存被覆盖内容：
+- windows关闭一个覆盖了部分窗口的对话框
+- 下拉菜单收回
+- 显示提示信息
+
+Windows肯定会保存：
+- 鼠标在客户区移动
+- 在客户区拖动图标
+
+### 处理
+通常以调用`BeginPaint`函数开始，以`EndPaint`函数结束。`BeginPaint`期间，windows会用注册时指定的画刷将其清除，使整个客户区有效，并返回hdc供你绘制。`EndPaint`会令hdc无效。
