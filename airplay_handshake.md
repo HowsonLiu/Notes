@@ -8,8 +8,11 @@ windows开启接收端服务：**raop_port**为5001、**airplay_port**为7001、
 2. **pair**
     1. **pair-setup**
     2. **pair-verify**
+3. **fairplay**
+4. **SETUP1**
+5. **GET PARAMETER**
 
-## GET /info
+# GET /info
 此阶段发送端请求获取接收端相关的信息，报文使用bplist格式
 ```
 GET /info RTSP/1.0
@@ -37,7 +40,7 @@ bplist00ÿÿüYaudioTypeß
 %')+TtypeXdisplaysTuuid_audioInputFormatsXfeatures[refreshRateÔ "!!_aa:54:01:af:c3:c1dUmodel<VheightZAppleTV2,1]sourceVersion_keepAliveLowPowerÜ-/123456(9;<.0!!!0.78:!=]widthPhysicalV220.68Ó[overscanned[widthPixelsO °w'ÖöÍnµÞR^ÃÍê¢Rh?ë!.ø¢$eTçZmacAddress¡,¢\audioFormatsTnameRvvZÿ÷_inputLatencyMicros[statusFlagsWAppleTVÔ "!!Wdefault_$2e388006-13ba-4041-9a67-25dd4a43d536Ó_outputLatencyMicros^audioLatenciesXrotation\heightPixelsVmaxFPSXdeviceID_audioOutputFormats_$e0ff8a27-6738-3d56-8a16-cc53aacee925_keepAliveSendStatsAsBody^heightPhysicaleUwidthRpiRpk¢#8±úRC"djN¿g°WT+
 :M×ô¨viÞv ¦am?PÓ¢¥ìjH@>¨
 ```
-## pair配对认证
+# pair配对认证
 配对认证分为两部分：设置setup与认证verify
 - ## pair-setup
     发送端会发送一个32位的数据，但是接收端只会验证长度，并不会使用该数据，原因未知
@@ -65,9 +68,9 @@ bplist00ÿÿüYaudioTypeß
     setup完成
 - ## pair-verify
     在verify前，接收端需要检查配对状态，如果状态并非为`STATUS_SETUP`，则不回应报文
-    发送包一般为68个字节，如果字节数不对，则包异常不回应
-    **verify报文有两种形式，根据报文的首个字节判断：**
-    - ### 首字节为1（第一个包）
+    接收包一般为68个字节，如果字节数不对，则包异常不回应
+    **verify有点类似三次握手，发送方的报文有两种形式，根据报文的首个字节判断：**
+    - ### 首字节为1（第一次握手）
         ```
         POST /pair-verify RTSP/1.0
         X-Apple-PD: 1
@@ -91,6 +94,7 @@ bplist00ÿÿüYaudioTypeß
         ```
         前4个字节保留，中间32个字节是发送端的公钥，后32个字节是发送端密文
         ```
+        // 回应包
         RTSP/1.0 200 OK
         CSeq: 2
         Server: AirTunes/220.68
@@ -110,11 +114,12 @@ bplist00ÿÿüYaudioTypeß
         0100   c0 83 d8 6e f6 c6 f0 49 21 93 0e 70 f8 af 54 e0
         0110   10 3c d2
         ```
-        接收端回应96个字节的报文，前32个字节是EDCH的公钥，后面64个字节是签名
+        接收端回应96个字节的报文，前32个字节是EDCH的公钥，后面64个字节是签名（**第二次握手**）
         **实际上这一轮属于密钥协商，并不是加密，使用的算法是[ECDH密钥协商算法](https://www.orchome.com/1049)**
         握手结束，接收端将状态设置为`STATUS_HANDSHAKE`
-    - ### 首字节为2（第二个包）
+    - ### 首字节为0（第三次握手）
         ```
+        // 接收包
         POST /pair-verify RTSP/1.0
         X-Apple-PD: 1
         X-Apple-AbsoluteTime: 609411011
@@ -125,6 +130,24 @@ bplist00ÿÿüYaudioTypeß
         Active-Remote: 2814835199
         User-Agent: AirPlay/409.16
 
+        // 报文
         áp=s_
         2TàÐiv®yÜùeÈj,(ãk±½áéë2°JÛ×7æßþcQkc»	Y2eh&O?
+
+        // 报文16进制
+        0120   xx xx xx xx xx xx xx 00 00 00 00 0c 00 e1 70 3d
+        0130   73 5f 02 1b 0a 32 54 e0 d0 69 76 ae 79 dc 8a f9
+        0140   65 c8 1d 6a 2c 28 e3 6b 90 90 b1 bd e1 e9 eb 32
+        0150   b0 94 4a db d7 37 e6 df fe 9f 63 51 6b 0b 63 98
+        0160   bb 09 59 32 65 68 26 06 4f 3f 13
         ```
+        发送方发送68位数据，前4位保留，后64位是签名
+        接收端先检查状态`STATUS_HANDSHAKE`，没问题后验证签名。验证签名成功，则三次握手成功，配对成功
+        ```
+        RTSP/1.0 200 OK
+        CSeq: 3
+        Server: AirTunes/220.68
+        ```
+        接收端回空包结束，将状态置为`STATUS_FINISHED`
+## pair总结
+pair流程主要是协商一个ed25519加密密钥
