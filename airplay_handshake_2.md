@@ -102,11 +102,11 @@
     后20个字节，实际上是第三次握手报文的末尾20个字节
 ## fairplay总结
 协议内容还需要进一步学习。但是从目前几次握手来看，两边主要是检查fairplay版本以及商量模式，并最终确定一个164字节的密钥用于以后的加解密处理
-# SETUP1
+# SETUP 1
 ## 发送端传输
 fairplay认证成功后，发送端会发送SETUP包
 
-SETUP包在整个airplay建立连接过程中会由发送端发送3次，现在是第一次
+SETUP包在整个airplay建立连接过程中会由发送端发送最多三次，现在是第一次
 ```
 SETUP rtsp://192.168.137.1/10555496157292350542 RTSP/1.0
 Content-Length: 529
@@ -121,7 +121,7 @@ bplist00ß
 RetSeiv^timingProtocol[sessionUUIDVosName^osBuildVersion]sourceVersionZtimingPort_isScreenMirroringSessionYosVersionTekeyXdeviceIDUmodelTnameZmacAddress OnþôTûÝNîqÒ¿\%iýSNTP_$927CA7D4-6369-4C4E-BB1F-B098F51192B5YiPhone OSU17B84V409.16Õ	T13.2OHFPLY< ¡4»píFÁµÂûmýÒEb3¯xú )6ÚZ`²&ò/s{VêÁ÷Ú´ ¦_10:30:25:B1:D7:4BWiPad7,5jrainv iPad_10:30:25:A6:E6:B8),0?KRaoz¤³¸ÃÅØÜ
 #n³
 ```
-SETUP包才用的是bplist格式传输，解析后大概如下
+SETUP包采用的是bplist格式传输，解析后大概如下
 ```
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -168,7 +168,7 @@ SETUP包才用的是bplist格式传输，解析后大概如下
 - `eiv`
     16字节数据，作为aes加密的[初向量](https://zh.wikipedia.org/wiki/%E5%88%9D%E5%A7%8B%E5%90%91%E9%87%8F)
 - `ekey`
-    72字节数据，内容是被fairplay加密后的aes密钥。接收端需要fairplay解密出密文作为aes密钥
+    72字节数据，内容是被fairplay加密后的aes密钥
 - `timing_port`
     时间同步端口
 - `name`
@@ -176,137 +176,7 @@ SETUP包才用的是bplist格式传输，解析后大概如下
 - `deviceId`
     设备ID，注意不是mac地址
 ## rtp初始化
-我们从解析rtp相关的结构体来看如何进行初始化
-```c++
-struct raop_rtp_s {
-    logger_t *logger;                                   // 日志类 在SETUP1完成
-    raop_callbacks_t callbacks;                         // 回调类 在SETUP1完成
-
-    /* Buffer to handle all resends */
-    raop_buffer_t *buffer;                              // 音频缓冲区 在SETUP1完成
-
-    // mirror_buffer_t *mirror;     lhs deleted
-    /* Remote address as sockaddr */
-    struct sockaddr_storage remote_saddr;               // 发送端socket相关 在SETUP1完成
-    socklen_t remote_saddr_len;
-    const char remoteName[128];                         // 设备名 在SETUP1完成
-    const char remoteDeviceId[128];                     // 设备ID 在SETUP1完成
-
-    /* MUTEX LOCKED VARIABLES START */
-    /* These variables only edited mutex locked */
-    int running;
-    int joined;
-
-    float volume;
-    int volume_changed;
-    unsigned char *metadata;
-    int metadata_len;
-    unsigned char *coverart;
-    int coverart_len;
-    char *dacp_id;
-    char *active_remote_header;
-    unsigned int progress_start;
-    unsigned int progress_curr;
-    unsigned int progress_end;
-    int progress_changed;
-
-    int flush;
-    thread_handle_t thread;
-    thread_handle_t thread_time;
-    mutex_handle_t run_mutex;
-    mutex_handle_t time_mutex;
-    cond_handle_t time_cond;
-    /* MUTEX LOCKED VARIABLES END */
-
-    /* Remote control and timing ports */               // 端口相关
-    unsigned short control_rport;
-    unsigned short timing_rport;                        // 时间同步协议远端端口 在SETUP1完成
-
-    /* Sockets for control, timing and data */
-    int csock, tsock, dsock;
-
-    /* Local control, timing and data ports */
-    unsigned short control_lport;
-    unsigned short timing_lport;
-    unsigned short data_lport;
-
-    /* Initialized after the first control packet */    // 接收端socket相关
-    struct sockaddr_storage control_saddr;
-    socklen_t control_saddr_len;
-    unsigned short control_seqnum;
-};
-```
-```c++
-struct raop_buffer_s {                          // 音频缓冲区实现
-    logger_t *logger;
-    unsigned char aeskey[RAOP_AESKEY_LEN];      // aes密钥 在SETUP1完成
-    unsigned char aesiv[RAOP_AESIV_LEN];        // aes初偏移 在SETUP1完成
-
-    HANDLE_AACDECODER phandle;                  //aac解码器句柄 在SETUP1完成
-
-    /* First and last seqnum */
-    int is_empty;
-    unsigned short first_seqnum;                // 播放的序号
-    unsigned short last_seqnum;                 // 收到的序号
-
-    /* RTP buffer entries */
-    raop_buffer_entry_t entries[RAOP_BUFFER_LENGTH];
-
-    /* Buffer of all audio buffers */
-    int buffer_size;
-    void *buffer;
-};
-```
-```c++
-struct raop_rtp_mirror_s {
-    logger_t *logger;                               // 日志类 在SETUP1完成
-    raop_callbacks_t callbacks;                     // 回调类 在SETUP1完成
-
-    /* Buffer to handle all resends */
-    mirror_buffer_t *buffer;                        // 镜像缓冲区 在SETUP1完成
-
-    //raop_rtp_mirror_t *mirror;    lhs deleted
-    /* Remote address as sockaddr */
-    struct sockaddr_storage remote_saddr;           // 发送端socket 在SETUP1完成
-    socklen_t remote_saddr_len;
-	const char remoteName[128];                     // 设备名 在SETUP1完成
-	const char remoteDeviceId[128];                 // 设备ID 在SETUP1完成
-
-    /* MUTEX LOCKED VARIABLES START */
-    /* These variables only edited mutex locked */
-    int running;
-    int joined;
-
-    int flush;
-    thread_handle_t thread_mirror;
-    thread_handle_t thread_time;
-    // For thread_mirror exit unexpeced.
-    thread_handle_t thread_exit_exception;
-    mutex_handle_t run_mutex;
-
-    mutex_handle_t time_mutex;
-    cond_handle_t time_cond;
-    /* MUTEX LOCKED VARIABLES END */
-    int mirror_data_sock, mirror_time_sock;
-
-    unsigned short mirror_data_lport;               // 端口相关
-    unsigned short mirror_timing_rport;             // 时间同步协议远端端口 在SETUP1完成
-    unsigned short mirror_timing_lport;
-};
-```
-```c++
-struct mirror_buffer_s {
-    logger_t *logger;
-    struct AES_ctx aes_ctx;
-    int nextDecryptCount;
-    uint8_t og[16];
-    /* AES key and IV */
-    // 需要二次加工才能使用
-    unsigned char aeskey[RAOP_AESKEY_LEN];
-    unsigned char ecdh_secret[32];
-};
-```
-SETUP1包主要初始化了raop协议的
+**SETUP 1**包主要初始化了raop协议的
 - **ip**
     支持ipv4以及ipv6
 - **设备名称**
@@ -315,10 +185,15 @@ SETUP1包主要初始化了raop协议的
 - **音频缓冲区**
     - **创建aac解码器**
     - **初始化加密环境**
-        其中`aesiv`可以直接使用，但是`aeskey`是密文；需要结合pair流程所协商好的ecdh密钥，进行sha512解密获取真正的`aeskey`
+        其中`eiv`可以直接使用，但是`ekey`是密文。下面是得到aes密钥的流程
+            1. `ekey`通过[fairplay](#fairplay)解密获取16位密文`fairplay_ekey`
+            2. 初始化sha512上下文
+            3. sha512摘要`fairplay_ekey`
+            4. sha512摘要`ecdh_secret`
+            5. 使用sha512签名的64位数据作为aes加密密钥`aeskey`
 - **视频缓冲区**
     - **初步初始化加密环境**
-        SETUP1阶段初始化只是记录`aesiv`以及`aeskey`，它也需要进行sha512解密，不过密钥不是pair流程协商好的密钥，而是后续包会携带的一个`streamConnectionID`
+        **SETUP 1**阶段初始化只是记录16位`fairplay_ekey`以及`ecdh_secret`，后续加密在**SETUP 2**完成
 
 ## 接收端回应
 回应一个空包
@@ -332,5 +207,7 @@ User-Agent: AirPlay/409.16
 
 
 ```
-## SETUP1总结
-SETUP1阶段实际上是发送端单方面的数据传输，接收端根据报文初始化rtp协议。其中音频环境已完成，镜像环境未完成。
+## SETUP 1总结
+**SETUP 1**阶段实际上是发送端单方面的数据传输，接收端根据报文初始化rtp协议。其中音频环境已完成，镜像环境未完成。
+
+其中音频加密协议主要使用aes加密算法，其中初向量来自包中`eiv`数据，密钥的获取需要经过fairplay解密、pair流程的ecdh密钥、sha512签名运算获得

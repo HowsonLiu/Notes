@@ -232,7 +232,12 @@ or ecx, 0ffffffffh
 xor eax, eax
 repne scasb
 
-在字符串或者数组中寻找一个值。分别将al/ax/eax中的值与edi寻址的一个byte/word/dword进行比较。常常结合repne使用。示例含义是内联strlen
+在字符串或者数组中寻找一个值。分别将al/ax/eax中的值与edi寻址的一个byte/word/dword进行比较。常常结合repne使用。若查找成功，则edi指向匹配字符后面的位置。示例含义是内联strlen
+### test
+> test eax, 100b
+jnz loc_40000
+
+两操作数做与运算，仅修改标志位，不回送结果。
 
 ## 汇编下的加减乘除
 ### 加法

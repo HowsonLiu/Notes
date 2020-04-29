@@ -39,7 +39,8 @@ User-Agent: AirPlay/406.31.21
 
 bplist00ÑYqualifier¡ZtxtAirPlay"
 ```
-第一个请求，请求二进制的plist
+客户端传来第一个plist
+> 
 ```
 0%¦æ¸¬+n¸SEä@É?À¨òÀ¨øïæÃµ®êÚfCPÿ×RTSP/1.0 200 OK
 Server: AirTunes/150.33
@@ -56,38 +57,106 @@ bplist00ß	(*
 返回plist，转换成xml如下
 ```
 <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-            <dict>
-                <key>et</key>
-                <integer>32</integer>
-                <key>name</key>
-                <string>GrandStream-6plus</string>
-                <key>sourceVersion</key>
-                <string>320.20</string>
-                <key>timingPort</key>
-                <integer>51149</integer>
-                <key>deviceID</key>
-                <string>D8:BB:2C:1F:28:94</string>
-                <key>model</key>
-                <string>iPhone7,1</string>
-                <key>macAddress</key>
-                <string>D8:BB:2C:1F:28:92</string>
-                <key>osBuildVersion</key>
-                <string>14G60</string>
-                <key>sessionUUID</key>
-                <string>0DBDA1BF-5083-46E7-9F25-37143854A861</string>
-                <key>ekey</key>
-                <data>
-                    RlBMWQECAQAAAAA8AAAAAF5xvfwQNcVLHM2KurVtQCMAAAAQC8/GGZ7i56Hu5wMkHYQ0Bh/SImp90UX8SzQltjNHayrNtwmX
-                </data>
-                <key>eiv</key>
-                <data>
-                    SdqQ7TXGEvz+R80Xi4IoaA==
-                </data>
-            </dict>
-        </plist>
-
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>audioFormats</key>
+		<array>
+			<dict>
+				<key>audioInputFormats</key>
+				<integer>67108860</integer>
+				<key>audioOutputFormats</key>
+				<integer>67108860</integer>
+				<key>type</key>
+				<integer>100</integer>
+			</dict>
+			<dict>
+				<key>audioInputFormats</key>
+				<integer>67108860</integer>
+				<key>audioOutputFormats</key>
+				<integer>67108860</integer>
+				<key>type</key>
+				<integer>101</integer>
+			</dict>
+		</array>
+		<key>audioLatencies</key>
+		<array>
+			<dict>
+				<key>audioType</key>
+				<string>default</string>
+				<key>inputLatencyMicros</key>
+				<false />
+				<key>outputLatencyMicros</key>
+				<false />
+				<key>type</key>
+				<integer>100</integer>
+			</dict>
+			<dict>
+				<key>audioType</key>
+				<string>default</string>
+				<key>inputLatencyMicros</key>
+				<false />
+				<key>outputLatencyMicros</key>
+				<false />
+				<key>type</key>
+				<integer>101</integer>
+			</dict>
+		</array>
+		<key>deviceID</key>
+		<string>80:e8:2c:1e:d5:a3</string>
+		<key>displays</key>
+		<array>
+			<dict>
+				<key>features</key>
+				<integer>14</integer>
+				<key>height</key>
+				<integer>1350</integer>
+				<key>heightPhysical</key>
+				<false />
+				<key>heightPixels</key>
+				<integer>1350</integer>
+				<key>maxFPS</key>
+				<integer>30</integer>
+				<key>overscanned</key>
+				<false />
+				<key>refreshRate</key>
+				<integer>60</integer>
+				<key>rotation</key>
+				<false />
+				<key>uuid</key>
+				<string>e5f7a68d-7b0f-4305-984b-974f677a150b</string>
+				<key>width</key>
+				<integer>1080</integer>
+				<key>widthPhysical</key>
+				<false />
+				<key>widthPixels</key>
+				<integer>1080</integer>
+			</dict>
+		</array>
+		<key>features</key>
+		<integer>130367356919</integer>
+		<key>keepAliveLowPower</key>
+		<integer>1</integer>
+		<key>keepAliveSendStatsAsBody</key>
+		<integer>1</integer>
+		<key>macAddress</key>
+		<string>80:e8:2c:1e:d5:a3</string>
+		<key>model</key>
+		<string>AppleTV5,3</string>
+		<key>name</key>
+		<string>Apple TV</string>
+		<key>pi</key>
+		<string>b08f5a79-db29-4384-b456-a4784d9e6055</string>
+		<key>pk</key>
+		<data>QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQT0=</data>
+		<key>sourceVersion</key>
+		<string>220.68</string>
+		<key>statusFlags</key>
+		<integer>68</integer>
+		<key>vv</key>
+		<integer>2</integer>
+	</dict>
+</plist>
 ```
 ```
 ¬+n¸S0%¦æ¸Eÿ@@¤½À¨øÀ¨òÃïæêÚfCµ jPTÅPOST /pair-setup RTSP/1.0
