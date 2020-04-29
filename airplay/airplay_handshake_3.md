@@ -25,7 +25,6 @@ volume: 0.0
 ```
 目前**GET PARAMETER**信令支持的参数只有`volume`
 
-而且实际上这步返回的音量值是多少无意义，因为后面会通过**SET PARAMETER**设置音量
 # RECORD
 发送端请求启动音频流传输。信令是**RECORD**
 ```
