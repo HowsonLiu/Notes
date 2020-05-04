@@ -1,4 +1,4 @@
-# duilib中的xml解析
+# 网易duilib中的xml解析（一）CMarkup
 # 数据结构
 xml树由`CMarkup`表达
 ```c++
@@ -62,13 +62,7 @@ public:
     bool GetAttributeValue(int iIndex, LPTSTR pstrValue, SIZE_T cchMax);
     bool GetAttributeValue(LPCTSTR pstrName, LPTSTR pstrValue, SIZE_T cchMax);
 
-private:
     // ...
-
-    int m_iPos;
-    int m_nAttributes;
-    XMLATTRIBUTE m_aAttributes[MAX_XML_ATTRIBUTES];
-    CMarkup* m_pOwner;
 };
 ```
 我们可以看到
@@ -278,7 +272,7 @@ bool CMarkup::_ParseData(LPTSTR& pstrText, LPTSTR& pstrDest, char cEnd)
 ```
 `_ParseData`主要用来转义字符串以及压缩空格
 
-`pstrText`是原字符串，`pstrDest`是转义输出位置，`cEnd`是停止字符串。`cEnd`在本例中取两个值：" 以及 < ，依次处理**属性值转义**`<Class name="font_title" value="font=&quot;2&quot;" />`和**数据值转义**`<Box>&quot</Box>`两种情况（*这种情况duilib不做处理*）
+`pstrText`是原字符串，`pstrDest`是转义输出位置，`cEnd`是停止字符串。`cEnd`在本例中取两个值：" 以及 < ，依次处理**属性值转义**`<Class name="font_title" value="font=&quot;2&quot;" />`和**数据值转义**`<Box>&quot</Box>`两种情况（*第二种情况duilib不做处理*）
 # xml属性解析
 ```c++
 bool CMarkup::_ParseAttributes(LPTSTR& pstrText)
@@ -306,6 +300,55 @@ bool CMarkup::_ParseAttributes(LPTSTR& pstrText)
     return true;
 }
 ```
-`_ParseAttributes`用来检查属性格式是否正确以及转义属性值
+`CMarkup::_ParseAttributes`用来检查属性格式是否正确以及转义属性值，真正要取属性键值对需要借助`CMarkupNode`的相关函数
+
+`CMarkupNode`提取键值对的函数如下
+```c++
+class UILIB_API CMarkupNode
+{
+private:
+    CMarkupNode();
+    CMarkupNode(CMarkup* pOwner, int iPos);
+    // ...
+private:
+    void _MapAttributes();
+
+    enum { MAX_XML_ATTRIBUTES = 64 };
+    // 属性对表示
+    typedef struct
+    {
+        ULONG iName;
+        ULONG iValue;
+    } XMLATTRIBUTE;
+
+    int m_iPos;
+    int m_nAttributes;
+    XMLATTRIBUTE m_aAttributes[MAX_XML_ATTRIBUTES];
+    CMarkup* m_pOwner;
+};
+
+void CMarkupNode::_MapAttributes()
+{
+    m_nAttributes = 0;
+    LPCTSTR pstr = m_pOwner->m_pstrXML + m_pOwner->m_pElements[m_iPos].iStart;
+    LPCTSTR pstrEnd = m_pOwner->m_pstrXML + m_pOwner->m_pElements[m_iPos].iData;
+    pstr += _tcslen(pstr) + 1;
+    while( pstr < pstrEnd ) {
+        m_pOwner->_SkipWhitespace(pstr);
+        // 将键值对依次放入属性对数组中
+        m_aAttributes[m_nAttributes].iName = pstr - m_pOwner->m_pstrXML;
+        pstr += _tcslen(pstr) + 1;
+        m_pOwner->_SkipWhitespace(pstr);
+        if( *pstr++ != _T('\"') ) return; // if( *pstr != _T('\"') ) { pstr = ::CharNext(pstr); return; }
+        
+        m_aAttributes[m_nAttributes++].iValue = pstr - m_pOwner->m_pstrXML;
+        if( m_nAttributes >= MAX_XML_ATTRIBUTES ) return;
+        pstr += _tcslen(pstr) + 1;
+    }
+}
+```
+`CMarkupNode`最高支持**64**个属性，超过会忽略不算
+
+内部使用`_MapAttributes`函数，从`CMarkup`中取**首节点**字符串，解析后，将键值对依次存到`XMLATTRIBUTE`数组中
 # 总结
 在这一层里主要是做标准xml格式的检查，duilib特化的工作主要在**WindowBuilder**进行
