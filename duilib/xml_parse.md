@@ -232,12 +232,12 @@ void CMarkup::_ParseMetaChar(LPTSTR& pstrText, LPTSTR& pstrDest)
 
 支持的转义表如下
 |原字符串|转义后字符串|
-|---|---|
-|`&amp;`|&|
-|`&lt;`|<|
-|`&gt;`|>|
-|`&quot;`|"|
-|`&apos;`|'|
+:---:|:---:
+`&amp;`|&
+`&lt;`|<
+`&gt;`|>
+`&quot;`|"
+`&apos;`|'
 # xml数据解析
 ```c++
 bool CMarkup::_ParseData(LPTSTR& pstrText, LPTSTR& pstrDest, char cEnd)
