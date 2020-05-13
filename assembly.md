@@ -438,6 +438,138 @@ add eax, 0AH
 使用cmp实现比较，add实现赋值，and实现另一种情况的赋值
 
 ---
+# 流程语句
+## Debug下的if 与 if -else 语句
+```
+if (argc > 0) {
+    printf("%d\n", argc);
+}
+
+cmp dword ptr[argc] 0
+jle MyIf + 42h              // 相反的比较
+```
+```
+    jxx     ELSE_BEGIN      // 相反的比较
+IF_BEGIN:
+    ...
+IF_END:
+    jmp     ELSE_END
+ELSE_BEGIN:
+    ...
+ELSE_END
+```
+## Release下的if 与 if -else 语句
+几乎与三元运算符一致
+## Debug下的if -else if -else语句
+```
+    jxx     ELSE_IF_BEGIN_1:
+IF_BEGIN:
+    ...
+IF_END:
+    jmp     ELSE_END
+ELSE_IF_BEGIN_1:
+    jxx     ELSE_IF_BEGIN_2
+    ...
+ELSE_IF_END_1:
+    jmp     ELSE_END
+ELSE_IF_BEGIN_2:
+    jxx     ELSE_BEGIN
+    ...
+ELSE_IF_END_2:
+    jmp     ELSE_END
+ELSE_BEGIN:
+    ...
+ELSE_END
+```
+不难发现，对于每一层if与else，实际上都是一样的格式
+```
+    jxx     NEXT_ELSE_IF_OR_ELSE        // 相反的比较，跳到下一层
+BEGIN：
+    ...
+END:
+    jmp     END                         // 符合当前比较，跳出整个if语句
+
+```
+## Release下的if -else if -else语句
+```
+void func(int i){
+    if (i == 1) {
+        printf("1");
+    }
+    else if(i == 2) {
+        printf("2");
+    }
+    else if(i == 3) {
+        printf("3");
+    }
+    else {
+        printf("4");
+    }
+}
+```
+对于这种只有if语句的函数来说，执行了其中一个分支就不需要跑到其他地方去了。编译器会使用Rutn指令进行优化
+```
+void func(int i){
+    if (i == 1) {
+        printf("1");
+        return;
+    }
+    if(i == 2) {
+        printf("2");
+        return;
+    }
+    if(i == 3) {
+        printf("3");
+        return;
+    }
+    else {
+        printf("4");
+        return;
+    }
+}
+```
+这样子就能节省一个jmp语句了
+## switch 语句
+switch语句与多重if -else if -else语句的区别是
+![](resource\assembly\compare_switch_to_if_1.png)
+![](resource\assembly\compare_switch_to_if_2.png)
+if语句在条件判断指令后面就跟着要执行的指令
+switch语句将所有要执行的指令都存放到后面，以便没有break的时候顺序执行
+**在switch分支数小于4的情况下，VC++6.0会模拟成if语句提高效率**
+## switch语句的线性优化
+当判定值存在明显线性关系的时候，switch会使用数组存放判定值
+![](resource\assembly\switch_linera.png)
+由于判定值从1开始，所以插入`dec eax`使`i`减一，然后就可以直接使用i的值作为索引查找数据了
+`cmp dword ptr [i], 6`是范围确定，在这里只有6个判定值，因此数组大小也只有6，超过了就直接跳过
+最后红框处我们可以看到，`rcx`寄存器保存了数组的基地址，`11818`是数组的偏移地址，由于一个地址占`int`4个字节，所以`eax`需要乘以4
+![](resource\assembly\switch_linera_table.png)
+## switch语句的索引优化
+当最大判定值与最小判定值的差小于等于255的时候，switch语句使用索引表+地址表的形式优化
+![](resource\assembly\switch_index_table.png)
+
+先根据变量查询索引表，索引表最多256位，而且每一项只占用1字节
+这里可以看到，中空的4标签与default标签一样，都属于第6项
+
+![](resource\assembly\switch_index_address_table.png)
+地址表的第6项就是结尾
+## switch语句的树状优化
+![](resource\assembly\switch_tree.png)
+还原出来的树如下
+```                   
+                    5
+                   / \
+                  1   6
+                 /     \
+                2      259
+               /       /
+              3       /
+               \     /
+                default
+```
+### 降低树的高度
+编译器会使用上方的三种方法优化（替换成if语句、线性优化、索引优化）尝试优化左右子树来降低树的高度
+
+---
 # 循环
 ## Debug版
 ### do循环
