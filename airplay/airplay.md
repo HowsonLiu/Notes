@@ -175,5 +175,7 @@ dnssd_register_airplay(dnssd_t *dnssd, const char *name, unsigned short port, co
 }
 ```
 可以看到，密码功能由raop注册的mDNS实现，因为投屏一定推音频流，但推音频流不一定投屏
+
+相关字段含义，可以在[这里](https://nto.github.io/AirPlay.html#servicediscovery)查看
 ## 初始化总结
 广义的Airplay协议由Airplay协议、raop协议以及mDNS协议组成。其中Airplay负责视频流，raop负责音频流、mDNS负责局域网设备发现。
