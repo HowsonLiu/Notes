@@ -105,8 +105,9 @@ xxxx   xx xx 25 00 00 00 01 00 16 01 51 b4 05 4c fd 98
 0090   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 00a0   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 00b0   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-00c0   00 00 // 下面是H264报文
+00c0   00 00 
 
+// H264
 xxxx   xx xx 01 64 00 2a ff e1 00 12 27 64 00 2a ac 13
 00d0   14 50 16 80 89 f9 66 e0 20 20 20 40 01 00 04 28
 00e0   ee 3c b0 02 00 00 00 ce // payload 块，下面是数据
@@ -119,7 +120,37 @@ xxxx   xx xx 01 64 00 2a ff e1 00 12 27 64 00 2a ac 13
 
 其他数据还没懂什么意思
 
-payload块的数据似乎不是使用标准的RTP协议[RFC 6184](https://tools.ietf.org/html/rfc6184#page-10)
+H264数据格式似乎不是遵循标准的RTP协议[RFC 6184](https://tools.ietf.org/html/rfc6184#page-10)
 - **1字节** 版本号。第一版
 - **2字节** [Profile](https://en.wikipedia.org/wiki/Advanced_Video_Coding#Profiles)。控制编码效率以及压缩率，0x64即100属于**High Profile**
-- **3字节** [Level](https://en.wikipedia.org/wiki/Advanced_Video_Coding#Levels)。控制解码器的处理能力以及内存容量，0还不清楚代表什么意思
+- **3字节** Compatibility 兼容性
+- **4字节** [Level](https://en.wikipedia.org/wiki/Advanced_Video_Coding#Levels)。控制解码器的处理能力以及内存容量，0x2a即42属于4.2的级别
+- **7 ~ 8字节** SPS Length。SPS数据长度，上图是0x12即18字节
+- **后SPS Length字节**SPS数据。
+- **后1字节** PPS Number。PPS串数量
+- **后2字节** PPS Length。这个数似乎不能直接得出。需要运算`payload[h264.lengthofSPS + 9] & 2040) + payload[h264.lengthofSPS + 10]) & 255`
+- **后PPS Length字节**PPS数据
+
+ **`payloadtype` = 1 的数据包整合了H264中的PPS以及SPS，并没有使用加密**
+
+ ## `playloadtype` = 0 的数据包
+ ```
+xxxx   xx xx f3 16 00 00 00 00 00 00 71 2c 02 f1 69 98
+0050   02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0060   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0070   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0080   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0090   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00a0   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00b0   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00c0   00 00 
+
+// H264
+00c0   xx xx d2 92 89 1c f5 8f 6d 1f d7 f9 c9 5e b4 51
+00d0   ff 59 b2 a8 68 75 0f f6 f9 08 79 38 a9 0a 79 99
+00e0   fb 44 36 05 fe b6 fb 9b 32 0d 10 81 61 4c 52 23
+...
+ ```
+ 上方128字节的报文头还不清楚其具体意思
+
+ 下方是加密的H264帧，[解密](airplay_handshake_3.md#raop初始化)后即可解码使用
