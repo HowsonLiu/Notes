@@ -116,6 +116,74 @@ ListNode* sort(ListNode* left, ListNode* right){
     }
 }
 ```
+# 树的非递归遍历
+## 中序遍历（最简单）
+```c++
+vector<int> inorderTraversal(TreeNode* root) {
+    vector<int> res;
+    stack<TreeNode*> stk;
+    TreeNode* cur = root;
+    while(cur || !stk.empty()) {
+        while(cur) {                // 如果有cur，则需要向左遍历至最左节点
+            stk.push(cur);          // 并将经过的节点压栈
+            cur = cur->left;
+        }
+        cur = stk.top();            // 此时cur必为空，栈顶为最左节点
+        res.push_back(cur->val);    // 访问
+        stk.pop();                  // 出栈
+        cur = cur->right;           // 即使没有右节点也不用担心，下一轮循环的while(cur)会跳过
+    }
+    return res;
+}
+```
+访问的时机在出栈前
+## 前序遍历
+```c++
+vector<int> preorderTraversal(TreeNode* root) {
+    vector<int> res;
+    stack<TreeNode*> stk;
+    auto cur = root;
+    while(cur || !stk.empty()) {
+        while(cur) {
+            res.push_back(cur->val);    // 入栈前访问
+            stk.push(cur);
+            cur = cur->left;
+        }
+        cur = stk.top();
+        stk.pop();
+        cur = cur->right;
+    }
+    return res;
+}
+```
+前序遍历跟中序遍历一样，区别在于访问的时机在入栈前
+## 后序遍历
+```c++
+vector<int> postorderTraversal(TreeNode* root) {
+    vector<int> res;
+    stack<TreeNode*> stk;
+    TreeNode *cur = root, *prev = nullptr;      // 需要一个额外的变量记录右子树是否被遍历过了
+    while(cur || !stk.empty()) {                // 老三样
+        while(cur) {                            // 老三样，先找到最左节点
+            stk.push(cur);
+            cur = cur->left;
+        }
+        cur = stk.top();                        // 此时cur是（未访问的）最左节点，此时他必定没有左子树（或左子树已经访问过了），但是他有可能有右子树，不能直接访问，所以需要下面的判断
+        stk.pop();
+        if(!cur->right || cur->right == prev) { // 太棒了，这个最左节点没有右节点/右节点已经被访问过了
+            res.push_back(cur->val);            // 终于能访问中间这个节点了（以父节点的身份访问）
+            prev = cur;                         // 我这节点有可能是别人的右子树，需要记录一下
+            cur = nullptr;                      // 下一个要访问节点从栈里面取吧
+        }
+        else {                                  // 可恶，居然有未访问过的右子树
+            stk.push(cur);                      // 白取出来了，压回去
+            cur = cur->right;                   // 从右节点开始走一遍流程吧
+        }
+    }
+    return res;
+}
+```
+其实大概框架也跟中序遍历一样，只不过由于节点的访问时机跟右子树是否被访问过有关，所以需要增加一个变量记录前一个访问的节点，以及增加一个if语句判断右子树是否存在或北方问过
 # 常见题目
 ## 约瑟夫环
 ### 题目
@@ -141,7 +209,7 @@ int lastRemaining(int n, int m) {
 解法是一个自底向上的解法，它所表达的意思是：**最终生还者，在出列偏移为`m`的情况下，在第`n`轮的编号是多少**。也就是说，它求的是一个**编号映射关系**  
 
 编号的映射关系自底向上不好思考，我们不妨切换到自顶向下进行思考：
-1. 在第n轮中，出列的人的编号为：`(0+m-1) % n`
+1. 在第n轮中，出列的人的编号为：`(0+m-1) % n`  
     `-1`是因为下标偏移到从0开始，`%n`是因为成环，`0+`是因为在第n轮中从下标为0的人开始
 2. 那么在第n-1轮中，**出列的人后面第一个人，就成为了第一个数0的人，也就是第n-1轮的下标0**。也就是说，第n-1轮的下标0对应在第n轮的下标为`(0+m-1+1) % n => m % n`
 3. 依次类推，在第n-1轮下标i对应在第n轮的下标为`(m+i) % n`，也就是**`i = (m+i) % n`**
