@@ -79,6 +79,18 @@ void merge(int* arr, int left, int mid, int right, int* tmp){
     while(left <= right)        // 将tmp的放进原数组
         arr[left++] = tmp[t++]; 
 }
+
+void merge2(int* arr, int* tmp, int lo, int mid, int hi) {
+    for(int k = lo; i <= hi; ++k)
+        tmp[k] = arr[k];
+    int i = lo, j = mid+1;
+    for(int k = lo; k <= hi; ++k) {
+        if(i > mid) arr[k] = tmp[j++];                  // 剩余右边
+        if(j > hi) arr[k] = tmp[i++];                   // 剩余左边
+        else if(tmp[i] < tmp[j]) arr[k] = tmp[i++];     // 比较，稳定排序
+        else arr[k] = tmp[j++];                 
+    }
+}
 ```
 ### 链表
 ```c++
