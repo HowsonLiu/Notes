@@ -46,10 +46,16 @@ void quicksort(int* arr, int start, int end){
  *@param tmp: 辅助空间
  */
 void sort(int* arr, int left, int right, int* tmp){
+    if(right <= left+CUTOFF-1) {
+        InsertSort(arr, left, right);       // 优化1：子数组过短时，用插入排序
+        return;
+    }
+
     if(left < right){
         int mid = (left + right) / 2;
         sort(arr, left, mid, tmp);          // 左边排序
         sort(arr, mid+1, right, tmp);       // 右边排序
+        if(arr[mid] < arr[mid+1]) return;   // 优化2：已排序，可以直接返回
         merge(arr, left, mid, right, tmp);  // 合并两个有序数组
     }
 }
