@@ -97,6 +97,16 @@ void merge2(int* arr, int* tmp, int lo, int mid, int hi) {
         else arr[k] = tmp[j++];                 
     }
 }
+
+void bottomUpMergeSort(int* arr, int size) {
+    int* aux = (int*)malloc(size*sizeof(int));
+    for(int sz = 1; sz < size; sz = sz+sz) {
+        for(int lo = 0; lo+sz < size; lo += sz+sz) {
+            merge(arr, aux, lo, lo+sz-1, min(lo+sz+sz-1, size-1));
+        }
+    }
+    free(aux);
+}
 ```
 ### 链表
 ```c++
