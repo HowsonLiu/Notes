@@ -46,10 +46,16 @@ void quicksort(int* arr, int start, int end){
  *@param tmp: 辅助空间
  */
 void sort(int* arr, int left, int right, int* tmp){
+    if(right <= left+CUTOFF-1) {
+        InsertSort(arr, left, right);       // 优化1：子数组过短时，用插入排序
+        return;
+    }
+
     if(left < right){
         int mid = (left + right) / 2;
         sort(arr, left, mid, tmp);          // 左边排序
         sort(arr, mid+1, right, tmp);       // 右边排序
+        if(arr[mid] < arr[mid+1]) return;   // 优化2：已排序，可以直接返回
         merge(arr, left, mid, right, tmp);  // 合并两个有序数组
     }
 }
@@ -78,6 +84,28 @@ void merge(int* arr, int left, int mid, int right, int* tmp){
     t = 0;
     while(left <= right)        // 将tmp的放进原数组
         arr[left++] = tmp[t++]; 
+}
+
+void merge2(int* arr, int* tmp, int lo, int mid, int hi) {
+    for(int k = lo; i <= hi; ++k)
+        tmp[k] = arr[k];
+    int i = lo, j = mid+1;
+    for(int k = lo; k <= hi; ++k) {
+        if(i > mid) arr[k] = tmp[j++];                  // 剩余右边
+        if(j > hi) arr[k] = tmp[i++];                   // 剩余左边
+        else if(tmp[i] < tmp[j]) arr[k] = tmp[i++];     // 比较，稳定排序
+        else arr[k] = tmp[j++];                 
+    }
+}
+
+void bottomUpMergeSort(int* arr, int size) {
+    int* aux = (int*)malloc(size*sizeof(int));
+    for(int sz = 1; sz < size; sz = sz+sz) {
+        for(int lo = 0; lo+sz < size; lo += sz+sz) {
+            merge(arr, aux, lo, lo+sz-1, min(lo+sz+sz-1, size-1));
+        }
+    }
+    free(aux);
 }
 ```
 ### 链表
