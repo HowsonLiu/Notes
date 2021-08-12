@@ -74,3 +74,10 @@
     ![](rb-tree/insert-3node1.png)  
     ![](rb-tree/insert-3node2.png)  
     ![](rb-tree/insert-3node3.png)  
+
+小诀窍：
+- 右节点红，左节点黑，**左旋**
+- 左节点红，左左节点红，**右旋**
+- 左右节点红，**变色**
+## demo
+![](rb-tree/demo.gif)
