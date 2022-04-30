@@ -1,4 +1,57 @@
 # Swift快速上手
+# 语法糖
+## 区间运算符（Range Operators）
+### 闭区间运算符
+```swift
+// [0, 4)
+for i in 0..<4 {
+    // reach 0, 1, 2, 3
+}
+```
+### 半开区间运算符
+```swift
+// [0, 4]
+for i in 0...4 {
+    // reach 0, 1, 2, 3, 4
+}
+```
+### 单侧区间运算符
+```swift
+let arr = ['a', 'b', 'c', 'd']
+for c in arr[2...] {
+    // reach 'c', 'd'
+}
+for c in arr[...2] {
+    // reach 'a', 'b', 'c'
+}
+for c in arr[..<2] {
+    // reach 'a', 'b'
+}
+```
+## 返回复合值
+```swift
+func calculateStatistics(scores: [Int]) -> (min: Int, max: Int, sum: Int) {
+    // todo
+    return (min, max, sum)
+}
+
+let statistics = calculateStatistics(scores: [1,2,3,4,5])
+print(statistics.sum)
+print(statistics.2)
+```
+
+# 闭包
+使用`{}`来创建一个闭包，使用`in`将参数和返回值的声明与函数体分离
+```swift
+numbers.map({
+    (number: Int) -> Int in
+    let result = 3 * number
+    return result
+})
+```
+
+
+
 # 变量的声明  
 - `var` 变量  
 - `let` 常量  
@@ -53,4 +106,4 @@ func addChar(str: String?) -> String? {
 - public  
     可以被任何代码访问。但在模块外不可以被override和继承，模块内可以
 - open
-    模块外可以被override和继承
+    模块外可以被override和继承  
