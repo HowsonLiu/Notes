@@ -107,7 +107,7 @@ DWORD WINAPI ThreadFunc(PVOID pvParam){
 - 若线程是进程中最后一个线程，则进程也终止
 - 线程内核对象引用计数-1
 ### 线程内幕
-<img src="https://raw.githubusercontent.com/HowsonLiu/Notes/master/resource/thread_core.jpg"/>
+![](thread_core.jpg)
 
 1. 系统在`CreateThread`后会创建一个线程内核对象，并将属性设置成如图所示（挂起）
 2. 从进程空间中分配线程堆栈内存，并将线程函数参数、线程函数指针依次写入栈中

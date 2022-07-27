@@ -370,7 +370,7 @@ else eax = eax
 再回顾上面的cdq指令，当eax为负数时，edx是11111111(-1)；当eax为正数时，edx是00000000(0)。使用eax-edx，恰好就能实现上面的分支结构！
 最后右移幂位数完成除法。
 ### 除数非2的幂
-![](resource/assembly_divice.png)
+![](assembly_divice.png)
 这里编译器进行了一次强度削弱，使用乘法指令以及移位指令代替除法指令。具体方法如下
 设x是变量，o是常量，则
 $$\frac{x}{o} = x \ast \frac{1}{o} = x \ast \frac{2^n}{2^n \ast o} = x \ast \frac{2^n}{o} \ast \frac{1}{2^n}$$
@@ -531,29 +531,29 @@ void func(int i){
 这样子就能节省一个jmp语句了
 ## switch 语句
 switch语句与多重if -else if -else语句的区别是
-![](resource\assembly\compare_switch_to_if_1.png)
-![](resource\assembly\compare_switch_to_if_2.png)
+![](compare_switch_to_if_1.png)
+![](compare_switch_to_if_2.png)
 if语句在条件判断指令后面就跟着要执行的指令
 switch语句将所有要执行的指令都存放到后面，以便没有break的时候顺序执行
 **在switch分支数小于4的情况下，VC++6.0会模拟成if语句提高效率**
 ## switch语句的线性优化
 当判定值存在明显线性关系的时候，switch会使用数组存放判定值
-![](resource\assembly\switch_linera.png)
+![](switch_linera.png)
 由于判定值从1开始，所以插入`dec eax`使`i`减一，然后就可以直接使用i的值作为索引查找数据了
 `cmp dword ptr [i], 6`是范围确定，在这里只有6个判定值，因此数组大小也只有6，超过了就直接跳过
 最后红框处我们可以看到，`rcx`寄存器保存了数组的基地址，`11818`是数组的偏移地址，由于一个地址占`int`4个字节，所以`eax`需要乘以4
-![](resource\assembly\switch_linera_table.png)
+![](switch_linera_table.png)
 ## switch语句的索引优化
 当最大判定值与最小判定值的差小于等于255的时候，switch语句使用索引表+地址表的形式优化
-![](resource\assembly\switch_index_table.png)
+![](switch_index_table.png)
 
 先根据变量查询索引表，索引表最多256位，而且每一项只占用1字节
 这里可以看到，中空的4标签与default标签一样，都属于第6项
 
-![](resource\assembly\switch_index_address_table.png)
+![](switch_index_address_table.png)
 地址表的第6项就是结尾
 ## switch语句的树状优化
-![](resource\assembly\switch_tree.png)
+![](switch_tree.png)
 还原出来的树如下
 ```                   
                     5
