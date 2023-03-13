@@ -148,7 +148,7 @@ final private class AnonymousObservable<Element>: Producer<Element> {
             fetchOr(self._isStopped, 1)
         }
     }
-    ```  
+    ```
     `ObserverBase`简单实现了两个协议，并定义了一个原子变量，标识事件之后可否继续，对事件上报到`onCore`函数处理  
 3. `AnonymousObserver`
     ```swift
